@@ -9,16 +9,26 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
 import { toast } from "sonner";
 import RichEditor from "@/components/RichEditor";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 /* ================= TYPES ================= */
 
 interface BlogsFormValues {
   title: string;
   description: string;
+  badge: string; // ✅ category stored here
   author: string;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  metaKeywords: string | null;
+  ogTitle: string | null;
+  ogDescription: string | null;
+  ogImage: string | null;
   image: File | null;
 }
 
@@ -34,7 +44,17 @@ interface BlogsFormModalProps {
 
 /* ================= CONSTANTS ================= */
 
+const categories = [
+  "Career Tips",
+  "HR Insights",
+  "Industry News",
+  "Tech Trends",
+  "Remote Work",
+  "General",
+];
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const getImageUrl = (url: string) => {
   if (!url) return "";
   return url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
@@ -43,7 +63,14 @@ const getImageUrl = (url: string) => {
 const initialFormValues: BlogsFormValues = {
   title: "",
   description: "",
+  badge: "",
   author: "",
+  metaTitle: null,
+  metaDescription: null,
+  metaKeywords: null,
+  ogTitle: null,
+  ogDescription: null,
+  ogImage: null,
   image: null,
 };
 
@@ -67,8 +94,15 @@ export default function BlogsFormModal({
       setFormValues({
         title: editingPage.title || "",
         description: editingPage.description || "",
+        badge: editingPage.badge || "",
         author: editingPage.author || "",
-        image: null, // ❗ file inputs cannot be pre-filled
+         metaTitle: editingPage.meta_title,
+        metaDescription: editingPage.meta_description,
+        metaKeywords: editingPage.meta_keywords,
+        ogTitle: editingPage.og_title,
+        ogDescription: editingPage.og_description,
+        ogImage: editingPage.og_image,
+        image: null, // file inputs cannot be prefilled
       });
     } else {
       setFormValues(initialFormValues);
@@ -80,27 +114,57 @@ export default function BlogsFormModal({
   const validate = () => {
     const newErrors: BlogFormErrors = {};
 
-    if (!formValues.title.trim()) newErrors.title = "Title is required";
-    if (!formValues.description.trim()) newErrors.description = "Content is required";
-    if (!editingPage && !formValues.image) {
+    if (!formValues.title.trim())
+      newErrors.title = "Title is required";
+
+    if (!formValues.description.trim())
+      newErrors.description = "Content is required";
+
+    if (!formValues.badge)
+      newErrors.badge = "Please select a category";
+
+    if (!editingPage && !formValues.image)
       newErrors.image = "Image is required";
-    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   /* ================= SUBMIT ================= */
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+
     try {
       const formData = new FormData();
       formData.append("title", formValues.title);
       formData.append("description", formValues.description);
+      formData.append("badge", formValues.badge);
       formData.append("author", "Admin");
-      if (formValues.image) {
-        formData.append("image", formValues.image);
-      }
+       // ✅ SEO fields (camelCase → snake_case)
+    if (formValues.metaTitle)
+      formData.append("metaTitle", formValues.metaTitle);
+
+    if (formValues.metaDescription)
+      formData.append("metaDescription", formValues.metaDescription);
+
+    if (formValues.metaKeywords)
+      formData.append("metaKeywords", formValues.metaKeywords);
+
+    if (formValues.ogTitle)
+      formData.append("ogTitle", formValues.ogTitle);
+
+    if (formValues.ogDescription)
+      formData.append("ogDescription", formValues.ogDescription);
+
+    if (formValues.ogImage)
+      formData.append("ogImage", formValues.ogImage);
+
+    if (formValues.image) {
+      formData.append("image", formValues.image);
+    }
+
       if (editingPage?.id) {
         await axios.put(
           `${API_BASE_URL}/blogs/${editingPage.id}`,
@@ -111,6 +175,7 @@ export default function BlogsFormModal({
         await axios.post(`${API_BASE_URL}/blogs`, formData);
         toast.success("Blog created successfully");
       }
+
       fetchPages();
       setOpen(false);
       setEditingPage(null);
@@ -131,7 +196,7 @@ export default function BlogsFormModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div className="space-y-2">
             <Label>Title</Label>
@@ -146,37 +211,118 @@ export default function BlogsFormModal({
             )}
           </div>
 
-          {/* Content */}
+          {/* Category (Badge) */}
           <div className="space-y-2">
-            <Label>Content</Label>
-            <RichEditor
-              value={formValues.description}
-              onChange={(value: string) =>
-                setFormValues((prev) => ({ ...prev, description: value }))
-              }
-            />
-            {errors.description && (
-              <p className="text-red-500 text-sm">{errors.description}</p>
+            <Label>Category</Label>
+
+            <div className="flex flex-wrap gap-3">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() =>
+                    setFormValues({ ...formValues, badge: cat })
+                  }
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                    formValues.badge === cat
+                      ? "bg-emerald-600 text-white shadow-md scale-105"
+                      : "bg-white border text-gray-600 hover:bg-emerald-50"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {errors.badge && (
+              <p className="text-red-500 text-sm">{errors.badge}</p>
             )}
           </div>
 
-          {/* Author */}
-          {/* <div className="space-y-2">
-            <Label>Author</Label>
-            <Input
-              value={formValues.author}
-              onChange={(e) =>
-                setFormValues({ ...formValues, author: e.target.value })
-              }
-            />
-            {errors.author && (
-              <p className="text-red-500 text-sm">{errors.author}</p>
+          {/* Content */}
+          <div className="space-y-2"
+          >
+            <Label>Content</Label>
+
+              <ReactQuill
+  theme="snow"
+  value={formValues.description || ""}
+  onChange={(html) =>
+    setFormValues((prev) => ({
+      ...prev,
+      description: html === "<p><br></p>" ? "" : html,
+    }))
+  }
+/>
+          
+            {errors.description && (
+              <p className="text-red-500 text-sm">
+                {errors.description}
+              </p>
             )}
-          </div> */}
+          </div>
+                   {/* Meta Title */}
+          <div className="space-y-2 w-full">
+            <Label htmlFor="metaTitle">Meta Title</Label>
+            <Input
+              id="metaTitle"
+              value={formValues.metaTitle || ""}
+              onChange={e => setFormValues({ ...formValues, metaTitle: e.target.value })}
+            />
+            {errors.metaTitle && <p className="text-red-500 text-sm">{errors.metaTitle}</p>}
+          </div>
+
+          {/* Meta Description */}
+          <div className="space-y-2 w-full">
+            <Label htmlFor="metaDescription">Meta Description</Label>
+            <Textarea
+              id="metaDescription"
+              value={formValues.metaDescription || ""}
+              onChange={e => setFormValues({ ...formValues, metaDescription: e.target.value })}
+              rows={2}
+            />
+            {errors.metaDescription && <p className="text-red-500 text-sm">{errors.metaDescription}</p>}
+          </div>
+
+          {/* OG Title */}
+          <div className="space-y-2 w-full">
+            <Label htmlFor="ogTitle">OG Title</Label>
+            <Input
+              id="ogTitle"
+              value={formValues.ogTitle || ""}
+              onChange={e => setFormValues({ ...formValues, ogTitle: e.target.value })}
+            />
+            {errors.ogTitle && <p className="text-red-500 text-sm">{errors.ogTitle}</p>}
+          </div>
+
+          {/* OG Description */}
+          <div className="space-y-2 w-full">
+            <Label htmlFor="ogDescription">OG Description</Label>
+            <Textarea
+              id="ogDescription"
+              value={formValues.ogDescription || ""}
+              onChange={e => setFormValues({ ...formValues, ogDescription: e.target.value })}
+              rows={2}
+            />
+            {errors.ogDescription && <p className="text-red-500 text-sm">{errors.ogDescription}</p>}
+          </div>
+
+          {/* OG Image */}
+          <div className="space-y-2 w-full">
+            <Label htmlFor="ogImage">OG Image URL</Label>
+            <Input
+              id="ogImage"
+              value={formValues.ogImage || ""}
+              onChange={e => setFormValues({ ...formValues, ogImage: e.target.value })}
+            />
+          </div>
+
+
 
           {/* Image */}
           <div className="space-y-2">
             <Label>Blog Image</Label>
+
             {editingPage?.image_url && !formValues.image && (
               <img
                 src={getImageUrl(editingPage.image_url)}

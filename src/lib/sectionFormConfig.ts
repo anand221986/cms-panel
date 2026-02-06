@@ -96,6 +96,55 @@ export const SECTION_FORM_CONFIG: Record<
     label: "MiddleContent",
     fields: [
       {
+  name: "features",
+  label: "Features",
+  type: "features", // 👈 custom list type
+},
+      {
+      name: "badge",
+      label: "Badge",
+      type: "text",
+    }, {
+      name: "heading",
+      label: "Heading",
+      type: "heading",
+      fields: [
+        {
+          name: "headingTitle",
+          label: "Title",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "headingsubtitle",
+          label: "Subtitle",
+          type: "text",
+        },
+         {
+            name: "headinghighlight",
+            label: "Highlight Text",
+            type: "text",
+          }
+      ],
+    },
+     {
+      name: "points",
+      label: "Points",
+      type: "list",
+      fields: [
+        {
+          name: "icon",
+          label: "Icon",
+          type: "icon",
+        },
+        {
+          name: "text",
+          label: "Text",
+          type: "text",
+        },
+      ],
+    },
+      {
         name: "image",
         label: "Image",
         type: "image",
@@ -106,10 +155,21 @@ export const SECTION_FORM_CONFIG: Record<
         label: "Content",
         type: "quill",
       },
+        
       { name: "ctaPrimary", label: "Primary CTA", type: "cta" },
       { name: "ctaSecondary", label: "Secondary CTA", type: "cta" },
+       {
+        name: "points",
+        label: "Points",
+        type: "kpi_items1", // custom type handled in renderDynamicFields
+        fields: [], // no nested fields
+      },
+
+      
 
     ],
+    
+    
   }, slider: {
     label: "Image Slider",
     fields: [

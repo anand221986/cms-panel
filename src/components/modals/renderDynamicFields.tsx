@@ -15,21 +15,45 @@ export function renderDynamicFields(
   sectionKey: string,
   config: typeof SECTION_FORM_CONFIG
 ) {
+  console.group(`Rendering section: ${sectionKey}`);
+  console.log("Meta data for section:", meta);
+
   const section = config[sectionKey];
-  if (!section) return null;
+
+  if (!section) {
+    console.warn(`No section found for key: ${sectionKey}`);
+    console.groupEnd();
+    return null;
+  }
+
+  console.log("Section config:", section);
 
   return section.fields.map((field) => {
     const rawValue = meta[field.name];
-
     const value =
       field.type === "cta"
-        ? Array.isArray(rawValue) ? rawValue : []
+        ? Array.isArray(rawValue)
+          ? rawValue
+          : []
+        : field.type === "group"
+        ? rawValue || {}
+        : field.type === "list" || field.type === "array"
+        ? Array.isArray(rawValue)
+          ? rawValue
+          : []
         : field.multiple
-          ? Array.isArray(rawValue) ? rawValue : []
-          : rawValue ?? "";
+        ? Array.isArray(rawValue)
+          ? rawValue
+          : []
+        : rawValue ?? "";
+
+    console.group(`Field: ${field.name} (${field.type})`);
+    console.log("Raw value:", rawValue);
+    console.log("Processed value:", value);
 
     /* ---------------- TEXT ---------------- */
     if (field.type === "text") {
+      console.groupEnd();
       return (
         <Input
           key={field.name}
@@ -42,6 +66,7 @@ export function renderDynamicFields(
 
     /* ---------------- TEXTAREA ---------------- */
     if (field.type === "textarea") {
+      console.groupEnd();
       return (
         <Textarea
           key={field.name}
@@ -52,32 +77,56 @@ export function renderDynamicFields(
       );
     }
 
-    /* ---------------- JSON ---------------- */
-    if (field.type === "json") {
+    // /* ---------------- JSON ---------------- */
+    // if (field.type === "json") {
+    //   console.groupEnd();
+    //   return (
+    //     <Textarea
+    //       key={field.name}
+    //       rows={6}
+    //       placeholder={field.label}
+    //       value={typeof value === "string" ? value : JSON.stringify(value, null, 2)}
+    //       onChange={(e) => {
+    //         try {
+    //           onChange(field.name, JSON.parse(e.target.value));
+    //         } catch {
+    //           onChange(field.name, e.target.value);
+    //         }
+    //       }}
+    //     />
+    //   );
+    // }
+
+    /* ---------------- GROUP ---------------- */
+    if (field.type === "group") {
+      const groupValue = value || {};
+      console.log("Group fields:", field.fields);
+      Object.entries(groupValue).forEach(([k, v]) =>
+        console.log(`  ${k}:`, v)
+      );
+
+      console.groupEnd();
       return (
-        <Textarea
-          key={field.name}
-          rows={6}
-          placeholder={field.label}
-          value={
-            typeof value === "string"
-              ? value
-              : JSON.stringify(value, null, 2)
-          }
-          onChange={(e) => {
-            try {
-              onChange(field.name, JSON.parse(e.target.value));
-            } catch {
-              onChange(field.name, e.target.value);
-            }
-          }}
-        />
+        <div key={field.name} className="space-y-2">
+          <label className="text-sm font-medium">{field.label}</label>
+          {field.fields?.map((subField: any) => (
+            <Input
+              key={subField.name}
+              placeholder={subField.label}
+              value={groupValue[subField.name] || ""}
+              onChange={(e) =>
+                onChange(field.name, { ...groupValue, [subField.name]: e.target.value })
+              }
+            />
+          ))}
+        </div>
       );
     }
 
-    /* ---------------- ARRAY ---------------- */
-    if (field.type === "array") {
-      const items = Array.isArray(rawValue) ? rawValue : [];
+    /* ---------------- LIST / ARRAY ---------------- */
+    if (field.type === "list" || field.type === "array") {
+      const items = Array.isArray(value) ? value : [];
+      console.log("Items:", items);
 
       const updateItem = (index: number, key: string, val: any) => {
         const updated = [...items];
@@ -85,6 +134,7 @@ export function renderDynamicFields(
         onChange(field.name, updated);
       };
 
+      console.groupEnd();
       return (
         <div key={field.name} className="space-y-4">
           <label className="text-sm font-medium">{field.label}</label>
@@ -96,9 +146,7 @@ export function renderDynamicFields(
                   key={subField.name}
                   placeholder={subField.label}
                   value={item[subField.name] || ""}
-                  onChange={(e) =>
-                    updateItem(index, subField.name, e.target.value)
-                  }
+                  onChange={(e) => updateItem(index, subField.name, e.target.value)}
                 />
               ))}
 
@@ -130,12 +178,14 @@ export function renderDynamicFields(
       );
     }
 
-    /* ---------------- IMAGE / FILE ---------------- */
+    /* ---------------- IMAGE ---------------- */
     if (field.type === "image" || field.type === "file") {
+      console.log("Image/file field, value:", value);
+      console.groupEnd();
+
       return (
         <div key={field.name} className="space-y-2">
           <label className="text-sm font-medium">{field.label}</label>
-
           <Input
             type="file"
             accept="image/*"
@@ -193,6 +243,7 @@ export function renderDynamicFields(
 
     /* ---------------- QUILL ---------------- */
     if (field.type === "quill") {
+      console.groupEnd();
       return (
         <div key={field.name} className="space-y-2">
           <label className="text-sm font-medium">{field.label}</label>
@@ -205,17 +256,20 @@ export function renderDynamicFields(
       );
     }
 
-    /* ---------------- CTA (FIXED) ---------------- */
+    /* ---------------- CTA ---------------- */
     if (field.type === "cta") {
       const ctas = Array.isArray(value) ? value : [];
+      console.log("CTA items:", ctas);
 
       if (ctas.length === 0) {
         onChange(field.name, [
           { label: "", url: "", variant: "primary", color: "#2563eb" },
         ]);
+        console.groupEnd();
         return null;
       }
 
+      console.groupEnd();
       return (
         <div key={field.name} className="space-y-3">
           <label className="text-sm font-medium">{field.label}</label>
@@ -232,7 +286,6 @@ export function renderDynamicFields(
                   onChange(field.name, updated);
                 }}
               />
-
               <Input
                 className="col-span-3"
                 placeholder="URL"
@@ -243,7 +296,6 @@ export function renderDynamicFields(
                   onChange(field.name, updated);
                 }}
               />
-
               <select
                 className="col-span-2 border rounded px-2"
                 value={cta.variant}
@@ -276,7 +328,7 @@ export function renderDynamicFields(
                 onClick={() =>
                   onChange(
                     field.name,
-                    ctas.filter((_: any, i: number) => i !== index)
+                    ctas.filter((_: any, i) => i !== index)
                   )
                 }
               >
@@ -288,6 +340,7 @@ export function renderDynamicFields(
       );
     }
 
+    console.groupEnd();
     return null;
   });
 }

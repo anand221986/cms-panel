@@ -35,32 +35,75 @@ function normalizeMeta(
   editingSection: any
 ) {
   const config = SECTION_FORM_CONFIG[sectionKey];
+
+  console.log(config,'testing')
   if (!config) return rawMeta || {};
 
   const normalized: any = {};
 
   for (const field of config.fields) {
     const value = rawMeta?.[field.name];
-
-    /* ---- CTA ---- */
+//     if (field.type === "image" && value === undefined) {
+//   normalized[field.name] = field.multiple ? [] : null;
+//   continue;
+// }
     if (field.type === "cta") {
-      normalized[field.name] = Array.isArray(value)
-        ? value.map((cta: any) => ({
-            label: cta.label ?? "",
-            url: cta.url ?? "",
-            variant: cta.variant ?? "primary",
-            color: cta.color ?? "#2563eb",
-          }))
-        : value
-          ? [{
-              label: value.label ?? "",
-              url: value.url ?? "",
-              variant: value.variant ?? "primary",
-              color: value.color ?? "#2563eb",
-            }]
-          : [];
-      continue;
-    }
+  normalized[field.name] = {
+    label: value?.label ?? "",
+    url: value?.url ?? "",
+    variant: value?.variant ?? "primary",
+    color: value?.color ?? "#2563eb",
+  };
+  continue;
+}
+/* ---- GROUP ---- */
+if (field.type === "group") {
+  const groupValue = value || {};
+  const normalizedGroup: any = {};
+
+  field.fields?.forEach((subField: any) => {
+    normalizedGroup[subField.name] =
+      groupValue[subField.name] ?? ""; // default empty string
+  });
+
+  normalized[field.name] = normalizedGroup;
+  continue;
+}
+/* ---- LIST ---- */
+if (field.type === "list") {
+  normalized[field.name] = Array.isArray(value)
+    ? value.map((item: any) => {
+        const newItem: any = {};
+        field.fields?.forEach((subField: any) => {
+          newItem[subField.name] = item?.[subField.name] ?? "";
+        });
+        return newItem;
+      })
+    : []; // default empty array
+  continue;
+}
+
+    // /* ---- CTA ---- */
+    // if (field.type === "cta") {
+    //   normalized[field.name] = Array.isArray(value)
+    //     ? value.map((cta: any) => ({
+    //         label: cta.label ?? "",
+    //         url: cta.url ?? "",
+    //         variant: cta.variant ?? "primary",
+    //         color: cta.color ?? "#2563eb",
+    //       }))
+    //     : value
+    //     ? [
+    //         {
+    //           label: value.label ?? "",
+    //           url: value.url ?? "",
+    //           variant: value.variant ?? "primary",
+    //           color: value.color ?? "#2563eb",
+    //         },
+    //       ]
+    //     : [];
+    //   continue;
+    // }
 
     /* ---- IMAGE ---- */
     if (field.type === "image" && !field.multiple) {
@@ -80,6 +123,23 @@ function normalizeMeta(
               ? img
               : `${API_BASE_URL}/uploads/sections/${img}`
           )
+        : [];
+      continue;
+    }
+
+    /* ---- USP ITEMS (🔥 FIX) ---- */
+    /* ---------- 🔥 USP ITEMS (CRITICAL FIX) ---------- */
+    if (field.type === "usp_items") {
+      console.log(value,'rahul')
+      normalized[field.name] = Array.isArray(value)
+        ? value.map((item: any) => ({
+            key: item?.key ?? "",
+            label: item?.label ?? item?.key ?? "",
+            finalNumber:
+              item?.finalNumber !== undefined ? item.finalNumber : "",
+            description: item?.description ?? "",
+            colors: item?.colors ?? "",
+          }))
         : [];
       continue;
     }
@@ -128,9 +188,11 @@ export default function SectionFormModal({
         is_active: true,
         meta: {},
       });
+      
+      
       return;
     }
-
+  console.log("CURRENT SECTION KEY:", editingSection?.section_key);
     const normalizedMeta = normalizeMeta(
       editingSection.section_key,
       editingSection.meta,
@@ -161,56 +223,105 @@ export default function SectionFormModal({
      SUBMIT
   ─────────────────────────────── */
   const handleSubmit = async () => {
-    try {
-      const error = validateForm();
-      if (error) return toast.error(error);
+  try {
+    const error = validateForm();
+    if (error) return toast.error(error);
 
-      const formData = new FormData();
+    const formData = new FormData();
 
-      ["section_key", "title", "sub_title", "sort_order", "is_active"].forEach(
-        (key) => formData.append(key, String(form[key]))
-      );
+    ["section_key", "title", "sub_title", "sort_order", "is_active"].forEach(
+      (key) => formData.append(key, String(form[key]))
+    );
 
-      const metaWithoutFiles: any = {};
-      const fileMap: Record<string, File[]> = {};
+    const metaWithoutFiles: any = {};
+    const fileMap: Record<string, File[]> = {};
 
-      Object.entries(form.meta || {}).forEach(([key, value]: any) => {
-        if (value instanceof File) {
-          fileMap[key] = [value];
-        } else if (Array.isArray(value) && value[0] instanceof File) {
-          fileMap[key] = value;
-        } else {
-          metaWithoutFiles[key] = value;
-        }
-      });
+    Object.entries(form.meta || {}).forEach(([key, value]: any) => {
 
-      Object.entries(fileMap).forEach(([key, files]) =>
-        files.forEach((file) => formData.append(key, file))
-      );
-
-      formData.append("meta", JSON.stringify(metaWithoutFiles));
-
-      if (editingSection) {
-        await axios.put(
-          `${API_BASE_URL}/pages/${pageId}/sections/${editingSection.id}`,
-          formData
-        );
-        toast.success("Section updated");
-      } else {
-        await axios.post(
-          `${API_BASE_URL}/pages/${pageId}/sections`,
-          formData
-        );
-        toast.success("Section created");
+      /* ---------- CLIENT ITEMS (NESTED FILE) ---------- */
+      if (key === "client_items" && Array.isArray(value)) {
+        metaWithoutFiles[key] = value.map((item: any, index: number) => {
+          if (item.logo instanceof File) {
+            const fileKey = `client_items_logo_${index}`;
+            fileMap[fileKey] = [item.logo];
+            return { ...item, logo: fileKey };
+          }
+          return item;
+        });
+        return;
       }
 
-      setOpen(false);
-      refresh();
-    } catch (err) {
-      console.error(err);
-      toast.error("Save failed");
+      /* ---------- EMPTY ARRAY (CLEAR IMAGE) ---------- */
+      if (Array.isArray(value) && value.length === 0) {
+        metaWithoutFiles[key] = null;
+        return;
+      }
+
+      /* ---------- MULTIPLE FILES ---------- */
+      if (Array.isArray(value) && value[0] instanceof File) {
+        fileMap[key] = value;
+        metaWithoutFiles[key] = key; // backend will map this
+        return;
+      }
+
+      /* ---------- SINGLE FILE ---------- */
+      if (value instanceof File) {
+        fileMap[key] = [value];
+        metaWithoutFiles[key] = null; // backend detects new upload
+        return;
+      }
+
+      /* ---------- IMAGE REMOVED ---------- */
+      if (value === null) {
+        metaWithoutFiles[key] = null;
+        return;
+      }
+
+      /* ---------- EXISTING VALUE ---------- */
+      metaWithoutFiles[key] = value;
+    });
+
+    /* ---------- APPEND FILES ---------- */
+    Object.entries(fileMap).forEach(([key, files]) => {
+      files.forEach((file) => formData.append(key, file));
+    });
+
+    /* ---------- APPEND META ---------- */
+    formData.append("meta", JSON.stringify(metaWithoutFiles));
+
+    /* ---------- DEBUG ---------- */
+    let debugOutput = "";
+    for (const [key, value] of formData.entries()) {
+      debugOutput += value instanceof File
+        ? `${key}: [File] ${value.name}\n`
+        : `${key}: ${value}\n`;
     }
-  };
+    console.log(debugOutput);
+
+    // return false; // ← REMOVE when ready
+
+    if (editingSection) {
+      await axios.put(
+        `${API_BASE_URL}/pages/${pageId}/sections/${editingSection.id}`,
+        formData
+      );
+      toast.success("Section updated");
+    } else {
+      await axios.post(
+        `${API_BASE_URL}/pages/${pageId}/sections`,
+        formData
+      );
+      toast.success("Section created");
+    }
+
+    setOpen(false);
+    refresh();
+  } catch (err) {
+    console.error(err);
+    toast.error("Save failed");
+  }
+};
+
 
   /* ───────────────────────────────
      UI
