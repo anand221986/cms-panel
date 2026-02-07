@@ -313,7 +313,24 @@ export const SECTION_FORM_CONFIG: Record<
         label: "Stats",
         type: "stats", // 👈 custom renderer
         fields: [],
-      }
+      },
+      // 👇 Right Section fields
+    {
+      name: "rightsectionbadge",
+      label: "Right Section Badge",
+      type: "text",
+    },
+    {
+      name: "rightsectiontitle",
+      label: "Right Section Title",
+      type: "text",
+    },
+    {
+      name: "rightsectiondescription",
+      label: "Right Section Description",
+      type: "textarea",
+    },
+
     ],
   }, slider: {
     label: "Image Slider",
