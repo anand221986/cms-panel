@@ -5,7 +5,6 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
-
 import {
   Select,
   SelectTrigger,
@@ -80,6 +79,8 @@ export function renderDynamicFields(
         "client_items",
         "badges",
         "features",
+        "ctas",
+        "stats"
       ].includes(field.type)
     ) {
       value = meta?.[field.name];
@@ -96,10 +97,7 @@ export function renderDynamicFields(
           ? JSON.stringify(raw, null, 2)
           : "";
     }
-
-    /* ================= FIELD TYPES ================= */
-
-    /* ---------- TEXT ---------- */
+  /* ---------- TEXT ---------- */
     if (field.type === "text") {
       return (
         <Input
@@ -110,7 +108,6 @@ export function renderDynamicFields(
         />
       );
     }
-
     /* ---------- TEXTAREA ---------- */
     if (field.type === "textarea") {
       return (
@@ -447,6 +444,190 @@ if (field.type === "features") {
         }
       >
         + Add Feature
+      </Button>
+    </div>
+  );
+}
+if (field.type === "ctas") {
+  const ctas: {
+    label: string;
+    link: string;
+    variant: "primary" | "outline";
+    icon?: string;
+  }[] = Array.isArray(value) ? value : [];
+
+  return (
+    <div key={field.name} className="space-y-4">
+      <label className="text-sm font-medium">{field.label}</label>
+
+      {ctas.map((cta, index) => {
+        const Icon = cta.icon ? ICON_MAP[cta.icon] : null;
+
+        return (
+          <div
+            key={index}
+            className="border rounded-lg p-3 space-y-2 bg-gray-50"
+          >
+            {/* Label */}
+            <Input
+              placeholder="Button Label"
+              value={cta.label || ""}
+              onChange={(e) => {
+                const updated = [...ctas];
+                updated[index] = { ...updated[index], label: e.target.value };
+                onChange(field.name, updated);
+              }}
+            />
+
+            {/* Link */}
+            <Input
+              placeholder="Link (https://...)"
+              value={cta.link || ""}
+              onChange={(e) => {
+                const updated = [...ctas];
+                updated[index] = { ...updated[index], link: e.target.value };
+                onChange(field.name, updated);
+              }}
+            />
+
+            {/* Variant */}
+            <select
+              className="border rounded px-2 py-1 text-sm w-full"
+              value={cta.variant || "primary"}
+              onChange={(e) => {
+                const updated = [...ctas];
+                updated[index] = {
+                  ...updated[index],
+                  variant: e.target.value as "primary" | "outline",
+                };
+                onChange(field.name, updated);
+              }}
+            >
+              <option value="primary">Primary</option>
+              <option value="outline">Outline</option>
+            </select>
+
+            {/* Icon */}
+            <div className="flex items-center gap-2">
+              <select
+                className="border rounded px-2 py-1 text-sm"
+                value={cta.icon || ""}
+                onChange={(e) => {
+                  const updated = [...ctas];
+                  updated[index] = { ...updated[index], icon: e.target.value };
+                  onChange(field.name, updated);
+                }}
+              >
+                <option value="">Select Icon</option>
+                {Object.keys(LucideIcons).map((iconName) => (
+                  <option key={iconName} value={iconName}>
+                    {iconName}
+                  </option>
+                ))}
+              </select>
+
+              {Icon && <Icon size={18} className="text-gray-600" />}
+            </div>
+
+            {/* Remove */}
+            <Button
+              size="sm"
+              variant="destructive"
+              type="button"
+              onClick={() =>
+                onChange(
+                  field.name,
+                  ctas.filter((_, i) => i !== index)
+                )
+              }
+            >
+              Remove CTA
+            </Button>
+          </div>
+        );
+      })}
+
+      {/* Add CTA */}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() =>
+          onChange(field.name, [
+            ...ctas,
+            { label: "", link: "", variant: "primary", icon: "" },
+          ])
+        }
+      >
+        + Add CTA
+      </Button>
+    </div>
+  );
+}
+if (field.type === "stats") {
+  const stats: { value: string; label: string }[] = Array.isArray(value)
+    ? value
+    : [];
+
+  return (
+    <div key={field.name} className="space-y-3">
+      <label className="text-sm font-medium">{field.label}</label>
+
+      {stats.map((item, index) => (
+        <div key={index} className="flex gap-2 items-center">
+          {/* Value */}
+          <Input
+            placeholder="Value (e.g. 10K+)"
+            value={item.value || ""}
+            onChange={(e) => {
+              const updated = [...stats];
+              updated[index] = {
+                ...updated[index],
+                value: e.target.value,
+              };
+              onChange(field.name, updated);
+            }}
+          />
+
+          {/* Label */}
+          <Input
+            placeholder="Label (e.g. Users)"
+            value={item.label || ""}
+            onChange={(e) => {
+              const updated = [...stats];
+              updated[index] = {
+                ...updated[index],
+                label: e.target.value,
+              };
+              onChange(field.name, updated);
+            }}
+          />
+
+          {/* Remove */}
+          <Button
+            size="sm"
+            variant="destructive"
+            type="button"
+            onClick={() =>
+              onChange(
+                field.name,
+                stats.filter((_, i) => i !== index)
+              )
+            }
+          >
+            Remove
+          </Button>
+        </div>
+      ))}
+
+      {/* Add Stat */}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() =>
+          onChange(field.name, [...stats, { value: "", label: "" }])
+        }
+      >
+        + Add Stat
       </Button>
     </div>
   );

@@ -35,12 +35,8 @@ function normalizeMeta(
   editingSection: any
 ) {
   const config = SECTION_FORM_CONFIG[sectionKey];
-
-  console.log(config,'testing')
   if (!config) return rawMeta || {};
-
   const normalized: any = {};
-
   for (const field of config.fields) {
     const value = rawMeta?.[field.name];
 //     if (field.type === "image" && value === undefined) {
@@ -192,7 +188,6 @@ export default function SectionFormModal({
       
       return;
     }
-  console.log("CURRENT SECTION KEY:", editingSection?.section_key);
     const normalizedMeta = normalizeMeta(
       editingSection.section_key,
       editingSection.meta,
