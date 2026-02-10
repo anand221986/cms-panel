@@ -228,6 +228,23 @@ export const SECTION_FORM_CONFIG: Record<
         type: "ctas", // custom renderer
         fields: [],
       },
+         // 👇 Right Section fields
+    {
+      name: "rightsectionbadge",
+      label: "Right Section Badge",
+      type: "text",
+    },
+    {
+      name: "rightsectiontitle",
+      label: "Right Section Title",
+      type: "text",
+    },
+    {
+      name: "rightsectiondescription",
+      label: "Right Section Description",
+      type: "textarea",
+    },
+      
 
     ],
   }, middleContent: {
@@ -330,6 +347,12 @@ export const SECTION_FORM_CONFIG: Record<
       label: "Right Section Description",
       type: "textarea",
     },
+    {
+  name: "services",
+  label: "Services",
+  type: "service_items",
+  fields: []
+}
 
     ],
   }, slider: {
@@ -346,11 +369,22 @@ export const SECTION_FORM_CONFIG: Record<
         label: "Caption",
         type: "text",
       },
+    // Primary CTA
       {
-        name: "cta",
-        label: "CTA Buttons",
-        type: "cta", // 🔥 NEW
+        name: "primary_cta",
+        label: "Primary CTA",
+        type: "cta",
+        fields: [],
       },
+
+      // Secondary CTA
+      {
+        name: "secondary_cta",
+        label: "Secondary CTA",
+        type: "cta",
+        fields: [],
+      },
+     
     ],
   },
   faq: {
@@ -370,7 +404,58 @@ export const SECTION_FORM_CONFIG: Record<
   },
   usp_items: {
     label: "USP Section",
-    fields: [{ name: "usp_items", label: "USP Items", type: "usp_items" }],
+    fields: [
+        {
+        name: "badge",
+        label: "Badge",
+        type: "text",
+      },
+
+      { name: "usp_items", label: "USP Items", type: "usp_items" },
+       {
+        name: "points",
+        label: "Points",
+        type: "kpi_items1", // custom type handled in renderDynamicFields
+        fields: [], // no nested fields
+      },
+
+      // 👇 NEW CTAs SECTION
+      {
+        name: "ctas",
+        label: "Call To Actions",
+        type: "ctas", // custom renderer
+        fields: [],
+      },
+      {
+        name: "stats",
+        label: "Stats",
+        type: "stats", // 👈 custom renderer
+        fields: [],
+      },
+      {
+        name: "heading",
+        label: "Heading",
+        type: "heading",
+        fields: [
+          {
+            name: "headingTitle",
+            label: "Title",
+            type: "text",
+            required: true,
+          },
+          {
+            name: "headingsubtitle",
+            label: "Subtitle",
+            type: "text",
+          },
+          {
+            name: "headinghighlight",
+            label: "Highlight Text",
+            type: "text",
+          }
+        ],
+      }
+    ],
   },
   blogs: {
     label: "Blogs Section",
@@ -384,5 +469,274 @@ export const SECTION_FORM_CONFIG: Record<
     label: "Client Logo Slider",
     fields: [{ name: "client_items", label: "Clients Items", type: "client_items" }],
   },
+  solutions: {
+    label: "Solutions Section",
+    fields: [
+      // Header
+      {
+        name: "header",
+        label: "Header",
+        type: "heading",
+        fields: [
+          { name: "badge", label: "Badge", type: "text", required: true },
+          { name: "title", label: "Title", type: "text", required: true },
+          { name: "subtitle", label: "Subtitle", type: "textarea" },
+        ],
+      },
+
+      // Specializations list
+      {
+        name: "specializations",
+        label: "Specializations",
+        type: "specializations",
+        fields: [
+          {
+            name: "title",
+            label: "Title",
+            type: "text",
+            required: true,
+          },
+          {
+            name: "description",
+            label: "Description",
+            type: "text",
+          },
+          {
+            name: "count",
+            label: "Count",
+            type: "text",
+          },
+          {
+            name: "icon",
+            label: "Icon",
+            type: "select",
+            options: ["code", "dollarSign", "users", "heart"],
+          },
+          {
+            name: "link",
+            label: "Link",
+            type: "text",
+          },
+        ],
+      },
+      // Solutions accordion
+      {
+        name: "solutions",
+        label: "Solutions Accordion",
+        type: "solutions",
+        fields: [
+          { name: "title", label: "Title", type: "text", required: true },
+          { name: "description", label: "Description", type: "textarea" },
+          {
+            name: "icon",
+            label: "Icon",
+            type: "select",
+            options: [
+              "briefcase",
+              "workflow",
+              "handshake",
+              "calendarDays",
+              "layoutDashboard",
+              "cog",
+            ],
+          },
+        ],
+      },
+ // Primary CTA
+      {
+        name: "primary_cta",
+        label: "Primary CTA",
+        type: "cta",
+        fields: [],
+      },
+
+      // Secondary CTA
+      {
+        name: "secondary_cta",
+        label: "Secondary CTA",
+        type: "cta",
+        fields: [],
+      },
+    ],
+  },
   // Add other sections as needed
+  why_choose: {
+    label: "Why Choose TalentBridge",
+    fields: [
+      {
+        name: "header",
+        type:"why_choose",
+        label: "Header",
+       fields: [
+          { name: "badge", label: "Badge", type: "text" },
+          { 
+            name: "title", label: "Title", type: "group", fields: [
+              { name: "prefix", label: "Prefix", type: "text" },
+              { name: "highlight", label: "Highlight", type: "text" },
+              { name: "suffix", label: "Suffix", type: "text" },
+            ] 
+          },
+          { name: "subtitle", label: "Subtitle", type: "textarea" },
+        ]
+      },
+      {
+        name: "stats",
+        label: "Stats",
+        type: "array",
+        itemFields: [
+          { name: "value", label: "Value", type: "text" },
+          { name: "label", label: "Label", type: "text" },
+          { name: "icon", label: "Icon", type: "select", options: ["target","award","users","globe"] },
+        ]
+      },
+      {
+        name: "features",
+        label: "Features",
+        type: "array",
+        itemFields: [
+          { name: "title", label: "Title", type: "text" },
+          { name: "description", label: "Description", type: "textarea" },
+          { name: "icon", label: "Icon", type: "select", options: ["shield","clock","globe","users"] },
+          { name: "theme", label: "Theme", type: "select", options: ["emerald","teal","green"] },
+        ]
+      },
+      {
+        name: "cta",
+        label: "Call to Action",
+        type: "group",
+        fields: [
+          { name: "label", label: "Label", type: "text" },
+          { name: "link", label: "Link", type: "text" },
+        ]
+      }
+    ]
+  },
+    workflow_short: {
+    label: "Workflow Short Section",
+    fields: [
+      {
+        name: "metrics",
+        label: "Top Metrics",
+        type: "metrics_items", // reuse your KPI items renderer
+      },
+      {
+        name: "header",
+        label: "Header",
+        type: "heading",
+        fields: [
+          { name: "title.prefix", label: "Title Prefix" },
+          { name: "title.highlight", label: "Title Highlight" },
+          { name: "title.suffix", label: "Title Suffix" },
+          { name: "subtitle", label: "Subtitle" },
+        ],
+      },
+      {
+        name: "blocks",
+        label: "Workflow Blocks",
+        type: "workflow_blocks",
+      },
+    ],
+  },
+// jobs: {
+//   label: "Jobs Section",
+//   fields: [
+//     {
+//       name: "hero",
+//       label: "Hero Area",
+//       type: "group",
+//       fields: [
+//         {
+//           name: "title",
+//           label: "Title",
+//           type: "heading",
+//           fields: [
+//             { name: "prefix", label: "Title Prefix" },
+//             { name: "highlight", label: "Title Highlight" },
+//             { name: "suffix", label: "Title Suffix" },
+//           ],
+//         },
+//         { name: "description", label: "Description", type: "textarea" },
+
+//         // Reuse KPI / metrics renderer
+//         {
+//           name: "floating_stats",
+//           label: "Floating Stats",
+//           type: "metrics_items",
+//         },
+
+//         // Notifications as dynamic list
+//         {
+//           name: "notifications",
+//           label: "Notifications",
+//           type: "list",
+//           itemFields: [
+//             { name: "title", label: "Title" },
+//             { name: "subtitle", label: "Subtitle" },
+//             {
+//               name: "icon",
+//               label: "Icon",
+//               type: "select",
+//               options: ["briefcase", "calendar", "users"],
+//             },
+//             {
+//               name: "color",
+//               label: "Color",
+//               type: "select",
+//               options: ["purple", "blue", "pink"],
+//             },
+//           ],
+//         },
+//       ],
+//     },
+
+//     // Workflow steps reused as workflow_blocks
+//     {
+//       name: "workflow_steps",
+//       label: "Workflow Steps",
+//       type: "workflow_blocks",
+//     },
+
+//     // Feature cards can be reused as a generic blocks list
+//     {
+//       name: "features",
+//       label: "Feature Cards",
+//       type: "blocks",
+//     },
+
+//     // Optional CTA
+//     {
+//       name: "cta",
+//       label: "CTA (Optional)",
+//       type: "group",
+//       fields: [
+//         { name: "title", label: "Title" },
+//         { name: "description", label: "Description" },
+//         {
+//           name: "primary_button",
+//           label: "Primary Button",
+//           type: "group",
+//           fields: [
+//             { name: "label", label: "Label" },
+//             { name: "link", label: "Link" },
+//           ],
+//         },
+//         {
+//           name: "secondary_button",
+//           label: "Secondary Button",
+//           type: "group",
+//           fields: [
+//             { name: "label", label: "Label" },
+//             { name: "link", label: "Link" },
+//           ],
+//         },
+//         {
+//           name: "badges",
+//           label: "Badges",
+//           type: "list",
+//           itemFields: [{ name: "badge", label: "Badge Text" }],
+//         },
+//       ],
+//     },
+//   ],
+// }
 };
