@@ -739,4 +739,11 @@ export const SECTION_FORM_CONFIG: Record<
 //     },
 //   ],
 // }
+
+ jobs: {
+    label: "Jobs Listing Section",
+    fields: [{}],
+  },
+
+
 };

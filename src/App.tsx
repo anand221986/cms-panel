@@ -26,6 +26,7 @@ const MailMerger = lazy(() => import("./pages/MailMerger"));
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PublicRoute from "@/components/PublicRoute";
+const JobsPage=lazy(() => import("./pages/JobsPage"));
 const queryClient = new QueryClient();
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const App = () => (
@@ -53,7 +54,7 @@ const App = () => (
                 <Route path="/leads" element={<ProtectedRoute><Lead /></ProtectedRoute>} />
                 <Route path="/tenants" element={<ProtectedRoute><Tenants /></ProtectedRoute>} />
                <Route path="/plans" element={<ProtectedRoute><Plan/></ProtectedRoute>} />
-                
+        <Route path="/jobs" element={<ProtectedRoute><JobsPage/></ProtectedRoute>} />         
 
                 <Route path="/pages/:pageId/sections" element={<ProtectedRoute><PageSectionList /></ProtectedRoute>} />
 

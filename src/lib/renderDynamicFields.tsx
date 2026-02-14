@@ -1593,6 +1593,82 @@ if (field.type === "cta") {
     </div>
   );
 }
+
+/* ---------- FAQ ITEMS ---------- */
+if (field.type === "faq_items") {
+  const faqs: { question: string; answer: string }[] =
+    Array.isArray(value) ? value : [];
+
+  return (
+    <div key={field.name} className="space-y-4">
+      <label className="text-sm font-medium">{field.label}</label>
+
+      {faqs.map((faq, index) => (
+        <div
+          key={index}
+          className="border rounded-lg p-4 space-y-2 bg-gray-50"
+        >
+          {/* Question */}
+          <Input
+            placeholder="Question"
+            value={faq.question || ""}
+            onChange={(e) => {
+              const updated = [...faqs];
+              updated[index] = {
+                ...updated[index],
+                question: e.target.value,
+              };
+              onChange(field.name, updated);
+            }}
+          />
+
+          {/* Answer */}
+          <Textarea
+            placeholder="Answer"
+            value={faq.answer || ""}
+            onChange={(e) => {
+              const updated = [...faqs];
+              updated[index] = {
+                ...updated[index],
+                answer: e.target.value,
+              };
+              onChange(field.name, updated);
+            }}
+          />
+
+          {/* Remove */}
+          <Button
+            size="sm"
+            variant="destructive"
+            type="button"
+            onClick={() =>
+              onChange(
+                field.name,
+                faqs.filter((_, i) => i !== index)
+              )
+            }
+          >
+            Remove FAQ
+          </Button>
+        </div>
+      ))}
+
+      {/* Add FAQ */}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() =>
+          onChange(field.name, [
+            ...faqs,
+            { question: "", answer: "" },
+          ])
+        }
+      >
+        + Add FAQ
+      </Button>
+    </div>
+  );
+}
     return null;
   });
 }

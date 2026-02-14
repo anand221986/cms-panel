@@ -47,7 +47,9 @@ const menuItems = [
   { title: "Easy Flow", url: "/mail-merge", icon: Mail, roles: ["Testing"] },
   { title: "Pro Sign Email", url: "/mail-signature", icon: FileText, roles: ["Testing"] },
   { title: "Usage Limits & Feature Gating", url: "/plans", icon: FileText, roles: ["Testing"] },
+   { title: "Jobs", url: "/jobs", icon: Briefcase, roles: ["SuperAdmin","admin",] },
     { title: "User Settings", url: "/settings", icon: Settings, roles: ["admin", "Testing", "SuperAdmin"] },
+     
 ];
 
 function AppSidebar() {
