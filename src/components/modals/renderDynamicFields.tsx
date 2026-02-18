@@ -15,107 +15,123 @@ export function renderDynamicFields(
   sectionKey: string,
   config: typeof SECTION_FORM_CONFIG
 ) {
-  console.group(`Rendering section: ${sectionKey}`);
-  console.log("Meta data for section:", meta);
-
   const section = config[sectionKey];
+  if (!section) return null;
 
-  if (!section) {
-    console.warn(`No section found for key: ${sectionKey}`);
-    console.groupEnd();
-    return null;
-  }
+  /* ───────────────────────────────
+     FILE UPLOAD HELPER
+  ─────────────────────────────── */
+  const uploadFile = async (file: File): Promise<string> => {
+    const fd = new FormData();
+    fd.append("file", file);
 
-  console.log("Section config:", section);
+    const res = await fetch(`${API_BASE_URL}/upload`, {
+      method: "POST",
+      body: fd,
+    });
 
+    const data = await res.json();
+    return data.url;
+  };
+
+  /* ───────────────────────────────
+     VALUE NORMALIZER
+  ─────────────────────────────── */
+  const normalizeValue = (field: any, rawValue: any) => {
+    if (field.type === "cta") return Array.isArray(rawValue) ? rawValue : [];
+
+    if (
+      field.type === "group" ||
+      field.type === "footer"
+    )
+      return rawValue || {};
+
+    if (
+      field.type === "list" ||
+      field.type === "array" ||
+      field.type === "client_items"
+    )
+      return Array.isArray(rawValue) ? rawValue : [];
+
+    if (field.multiple)
+      return Array.isArray(rawValue) ? rawValue : [];
+
+    return rawValue ?? "";
+  };
+
+  /* ───────────────────────────────
+     MAIN RENDER
+  ─────────────────────────────── */
   return section.fields.map((field) => {
-    const rawValue = meta[field.name];
-    const value =
-      field.type === "cta"
-        ? Array.isArray(rawValue)
-          ? rawValue
-          : []
-        : field.type === "group"
-        ? rawValue || {}
-        : field.type === "list" || field.type === "array"
-        ? Array.isArray(rawValue)
-          ? rawValue
-          : []
-        : field.multiple
-        ? Array.isArray(rawValue)
-          ? rawValue
-          : []
-        : rawValue ?? "";
+    const value = normalizeValue(field, meta[field.name]);
 
-    console.group(`Field: ${field.name} (${field.type})`);
-    console.log("Raw value:", rawValue);
-    console.log("Processed value:", value);
-
-    /* ---------------- TEXT ---------------- */
+    /* ================= TEXT ================= */
     if (field.type === "text") {
-      console.groupEnd();
       return (
         <Input
           key={field.name}
           placeholder={field.label}
           value={value}
-          onChange={(e) => onChange(field.name, e.target.value)}
+          onChange={(e) =>
+            onChange(field.name, e.target.value)
+          }
         />
       );
     }
 
-    /* ---------------- TEXTAREA ---------------- */
+    /* ================= TEXTAREA ================= */
     if (field.type === "textarea") {
-      console.groupEnd();
       return (
         <Textarea
           key={field.name}
           placeholder={field.label}
           value={value}
-          onChange={(e) => onChange(field.name, e.target.value)}
+          onChange={(e) =>
+            onChange(field.name, e.target.value)
+          }
         />
       );
     }
 
-    // /* ---------------- JSON ---------------- */
-    // if (field.type === "json") {
-    //   console.groupEnd();
-    //   return (
-    //     <Textarea
-    //       key={field.name}
-    //       rows={6}
-    //       placeholder={field.label}
-    //       value={typeof value === "string" ? value : JSON.stringify(value, null, 2)}
-    //       onChange={(e) => {
-    //         try {
-    //           onChange(field.name, JSON.parse(e.target.value));
-    //         } catch {
-    //           onChange(field.name, e.target.value);
-    //         }
-    //       }}
-    //     />
-    //   );
-    // }
-
-    /* ---------------- GROUP ---------------- */
-    if (field.type === "group") {
-      const groupValue = value || {};
-      console.log("Group fields:", field.fields);
-      Object.entries(groupValue).forEach(([k, v]) =>
-        console.log(`  ${k}:`, v)
-      );
-
-      console.groupEnd();
+    /* ================= QUILL ================= */
+    if (field.type === "quill") {
       return (
         <div key={field.name} className="space-y-2">
-          <label className="text-sm font-medium">{field.label}</label>
+          <label className="text-sm font-medium">
+            {field.label}
+          </label>
+
+          <ReactQuill
+            theme="snow"
+            value={value}
+            onChange={(html) =>
+              onChange(field.name, html)
+            }
+          />
+        </div>
+      );
+    }
+
+    /* ================= GROUP ================= */
+    if (field.type === "group") {
+      const groupValue = value || {};
+
+      return (
+        <div key={field.name} className="space-y-2">
+          <label className="font-medium text-sm">
+            {field.label}
+          </label>
+
           {field.fields?.map((subField: any) => (
             <Input
               key={subField.name}
               placeholder={subField.label}
               value={groupValue[subField.name] || ""}
               onChange={(e) =>
-                onChange(field.name, { ...groupValue, [subField.name]: e.target.value })
+                onChange(field.name, {
+                  ...groupValue,
+                  [subField.name]: e.target.value,
+                })
               }
             />
           ))}
@@ -123,224 +139,269 @@ export function renderDynamicFields(
       );
     }
 
-    /* ---------------- LIST / ARRAY ---------------- */
-    if (field.type === "list" || field.type === "array") {
-      const items = Array.isArray(value) ? value : [];
-      console.log("Items:", items);
+    /* ================= FOOTER ================= */
+    if (field.type === "footer") {
+      const groupValue = value || {};
 
-      const updateItem = (index: number, key: string, val: any) => {
-        const updated = [...items];
-        updated[index] = { ...updated[index], [key]: val };
-        onChange(field.name, updated);
-      };
+      const update = (key: string, val: any) =>
+        onChange(field.name, {
+          ...groupValue,
+          [key]: val,
+        });
 
-      console.groupEnd();
       return (
-        <div key={field.name} className="space-y-4">
-          <label className="text-sm font-medium">{field.label}</label>
+        <div
+          key={field.name}
+          className="border rounded-lg p-4 space-y-3"
+        >
+          <label className="font-semibold text-sm">
+            {field.label}
+          </label>
 
-          {items.map((item: any, index: number) => (
-            <div key={index} className="rounded-lg border p-4 space-y-3">
-              {field.fields?.map((subField: any) => (
+          {field.fields?.map((subField: any) => {
+            const subValue =
+              groupValue[subField.name] ?? "";
+
+            if (subField.type === "text")
+              return (
                 <Input
                   key={subField.name}
                   placeholder={subField.label}
-                  value={item[subField.name] || ""}
-                  onChange={(e) => updateItem(index, subField.name, e.target.value)}
+                  value={subValue}
+                  onChange={(e) =>
+                    update(
+                      subField.name,
+                      e.target.value
+                    )
+                  }
                 />
-              ))}
+              );
 
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() =>
-                  onChange(
-                    field.name,
-                    items.filter((_: any, i: number) => i !== index)
-                  )
-                }
-              >
-                Remove
-              </Button>
-            </div>
-          ))}
+            if (subField.type === "textarea")
+              return (
+                <Textarea
+                  key={subField.name}
+                  placeholder={subField.label}
+                  value={subValue}
+                  onChange={(e) =>
+                    update(
+                      subField.name,
+                      e.target.value
+                    )
+                  }
+                />
+              );
+
+            if (subField.type === "image")
+              return (
+                <div key={subField.name}>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file =
+                        e.target.files?.[0];
+                      if (!file) return;
+
+                      const url =
+                        await uploadFile(file);
+
+                      update(
+                        subField.name,
+                        url
+                      );
+                    }}
+                  />
+
+                  {subValue && (
+                    <img
+                      src={subValue}
+                      className="h-24 border rounded mt-2"
+                    />
+                  )}
+                </div>
+              );
+
+            return null;
+          })}
+        </div>
+      );
+    }
+
+   /* ---------------- CLIENT ITEMS ---------------- */
+if (field.type === "client_items") {
+  const items = Array.isArray(value) ? value : [];
+
+  const updateItem = (index: number, key: string, val: any) => {
+    const updated = [...items];
+    updated[index] = { ...updated[index], [key]: val };
+    onChange(field.name, updated);
+  };
+
+  const addItem = () => {
+    onChange(field.name, [
+      ...items,
+      {
+        logo: "",
+        name: "",
+        colors: "",
+        icon_key: "",
+      },
+    ]);
+  };
+
+  const removeItem = (index: number) => {
+    onChange(
+      field.name,
+      items.filter((_: any, i: number) => i !== index)
+    );
+  };
+
+  return (
+    <div key={field.name} className="space-y-4">
+
+      <label className="text-sm font-semibold">
+        {field.label}
+      </label>
+
+      {items.map((item: any, index: number) => (
+        <div
+          key={index}
+          className="border rounded p-4 space-y-3"
+        >
+
+          {/* LOGO */}
+          <div>
+            <label className="text-xs">Logo</label>
+
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                updateItem(index, "logo", file);
+              }}
+            />
+
+            {item.logo &&
+              typeof item.logo === "string" && (
+                <img
+                  src={item.logo}
+                  className="h-14 mt-2 border rounded"
+                />
+              )}
+          </div>
+
+          {/* NAME */}
+          <Input
+            placeholder="Client Name"
+            value={item.name || ""}
+            onChange={(e) =>
+              updateItem(index, "name", e.target.value)
+            }
+          />
+
+          {/* COLORS */}
+          <Input
+            placeholder="Tailwind colors"
+            value={item.colors || ""}
+            onChange={(e) =>
+              updateItem(index, "colors", e.target.value)
+            }
+          />
+
+          {/* ICON KEY */}
+          <Input
+            placeholder="Icon key"
+            value={item.icon_key || ""}
+            onChange={(e) =>
+              updateItem(index, "icon_key", e.target.value)
+            }
+          />
 
           <Button
             type="button"
-            variant="outline"
+            variant="destructive"
             size="sm"
-            onClick={() => onChange(field.name, [...items, {}])}
+            onClick={() => removeItem(index)}
           >
-            + Add {field.label}
+            Remove
           </Button>
+
         </div>
-      );
-    }
+      ))}
 
-    /* ---------------- IMAGE ---------------- */
-    if (field.type === "image" || field.type === "file") {
-      console.log("Image/file field, value:", value);
-      console.groupEnd();
+      <Button
+        type="button"
+        variant="outline"
+        onClick={addItem}
+      >
+        + Add Client
+      </Button>
 
+    </div>
+  );
+}
+
+    /* ================= IMAGE ================= */
+    if (field.type === "image") {
       return (
-        <div key={field.name} className="space-y-2">
-          <label className="text-sm font-medium">{field.label}</label>
+        <div key={field.name}>
+          <label className="text-sm font-medium">
+            {field.label}
+          </label>
+
           <Input
             type="file"
             accept="image/*"
-            multiple={Boolean(field.multiple)}
+            multiple={field.multiple}
             onChange={async (e) => {
-              const files = Array.from(e.target.files || []);
+              const files = Array.from(
+                e.target.files || []
+              );
+
               if (!files.length) return;
 
               if (field.multiple) {
-                const uploaded: string[] = [];
-                for (const file of files) {
-                  const fd = new FormData();
-                  fd.append("file", file);
-                  const res = await fetch(`${API_BASE_URL}/upload`, {
-                    method: "POST",
-                    body: fd,
-                  });
-                  const data = await res.json();
-                  uploaded.push(data.url);
-                }
-                onChange(field.name, [...value, ...uploaded]);
-              } else {
-                const fd = new FormData();
-                fd.append("file", files[0]);
-                const res = await fetch(`${API_BASE_URL}/upload`, {
-                  method: "POST",
-                  body: fd,
-                });
-                const data = await res.json();
-                onChange(field.name, data.url);
-              }
+                const urls =
+                  await Promise.all(
+                    files.map(uploadFile)
+                  );
 
-              e.target.value = "";
+                onChange(field.name, [
+                  ...value,
+                  ...urls,
+                ]);
+              } else {
+                const url =
+                  await uploadFile(files[0]);
+
+                onChange(field.name, url);
+              }
             }}
           />
 
-          {field.multiple && value.length > 0 && (
-            <div className="flex gap-2 flex-wrap">
-              {value.map((url: string, i: number) => (
+          {field.multiple
+            ? value?.map(
+                (url: string, i: number) => (
+                  <img
+                    key={i}
+                    src={url}
+                    className="h-24 border rounded mt-2"
+                  />
+                )
+              )
+            : value && (
                 <img
-                  key={i}
-                  src={url}
-                  className="h-24 w-32 rounded border object-cover"
+                  src={value}
+                  className="h-24 border rounded mt-2"
                 />
-              ))}
-            </div>
-          )}
-
-          {!field.multiple && value && (
-            <img src={value} className="h-28 rounded border object-cover" />
-          )}
+              )}
         </div>
       );
     }
 
-    /* ---------------- QUILL ---------------- */
-    if (field.type === "quill") {
-      console.groupEnd();
-      return (
-        <div key={field.name} className="space-y-2">
-          <label className="text-sm font-medium">{field.label}</label>
-          <ReactQuill
-            theme="snow"
-            value={value || ""}
-            onChange={(html) => onChange(field.name, html)}
-          />
-        </div>
-      );
-    }
-
-    /* ---------------- CTA ---------------- */
-    if (field.type === "cta") {
-      const ctas = Array.isArray(value) ? value : [];
-      console.log("CTA items:", ctas);
-
-      if (ctas.length === 0) {
-        onChange(field.name, [
-          { label: "", url: "", variant: "primary", color: "#2563eb" },
-        ]);
-        console.groupEnd();
-        return null;
-      }
-
-      console.groupEnd();
-      return (
-        <div key={field.name} className="space-y-3">
-          <label className="text-sm font-medium">{field.label}</label>
-
-          {ctas.map((cta: any, index: number) => (
-            <div key={index} className="grid grid-cols-12 gap-2 border p-3 rounded">
-              <Input
-                className="col-span-3"
-                placeholder="Label"
-                value={cta.label}
-                onChange={(e) => {
-                  const updated = [...ctas];
-                  updated[index] = { ...cta, label: e.target.value };
-                  onChange(field.name, updated);
-                }}
-              />
-              <Input
-                className="col-span-3"
-                placeholder="URL"
-                value={cta.url}
-                onChange={(e) => {
-                  const updated = [...ctas];
-                  updated[index] = { ...cta, url: e.target.value };
-                  onChange(field.name, updated);
-                }}
-              />
-              <select
-                className="col-span-2 border rounded px-2"
-                value={cta.variant}
-                onChange={(e) => {
-                  const updated = [...ctas];
-                  updated[index] = { ...cta, variant: e.target.value };
-                  onChange(field.name, updated);
-                }}
-              >
-                <option value="primary">Primary</option>
-                <option value="secondary">Secondary</option>
-                <option value="outline">Outline</option>
-              </select>
-
-              <input
-                type="color"
-                className="col-span-2 h-10 border rounded"
-                value={cta.color}
-                onChange={(e) => {
-                  const updated = [...ctas];
-                  updated[index] = { ...cta, color: e.target.value };
-                  onChange(field.name, updated);
-                }}
-              />
-
-              <Button
-                className="col-span-2"
-                variant="destructive"
-                size="sm"
-                onClick={() =>
-                  onChange(
-                    field.name,
-                    ctas.filter((_: any, i) => i !== index)
-                  )
-                }
-              >
-                ✕
-              </Button>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    console.groupEnd();
     return null;
   });
 }

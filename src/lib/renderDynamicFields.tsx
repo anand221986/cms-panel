@@ -115,6 +115,8 @@ export function renderDynamicFields(
   sectionKey: string,
   config: any
 ) {
+
+  console.log(sectionKey,'section key')
   const sectionConfig = config[sectionKey];
   if (!sectionConfig) return null;
   const ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
@@ -152,6 +154,7 @@ export function renderDynamicFields(
         "workflow_blocks",
         "metrics_items",
          "cta", 
+         "footer"
       ].includes(field.type)
     ) {
       value = meta?.[field.name];
@@ -1669,6 +1672,209 @@ if (field.type === "faq_items") {
     </div>
   );
 }
+
+if (field.type === "client_items") {
+  const items = Array.isArray(value) ? value : [];
+
+  const updateItem = (index: number, key: string, val: any) => {
+    const updated = [...items];
+    updated[index] = { ...updated[index], [key]: val };
+    onChange(field.name, updated);
+  };
+
+  const addItem = () => {
+    onChange(field.name, [
+      ...items,
+      {
+        logo: "",
+        name: "",
+        colors: "",
+        icon_key: "",
+      },
+    ]);
+  };
+
+  const removeItem = (index: number) => {
+    onChange(
+      field.name,
+      items.filter((_: any, i: number) => i !== index)
+    );
+  };
+
+  return (
+    <div key={field.name} className="space-y-4">
+
+      <label className="text-sm font-semibold">
+        {field.label}
+      </label>
+
+      {items.map((item: any, index: number) => (
+        <div
+          key={index}
+          className="border rounded p-4 space-y-3"
+        >
+
+          {/* LOGO */}
+          <div>
+            <label className="text-xs">Logo</label>
+
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                updateItem(index, "logo", file);
+              }}
+            />
+
+            {item.logo &&
+              typeof item.logo === "string" && (
+                <img
+                  src={item.logo}
+                  className="h-14 mt-2 border rounded"
+                />
+              )}
+          </div>
+
+          {/* NAME */}
+          <Input
+            placeholder="Client Name"
+            value={item.name || ""}
+            onChange={(e) =>
+              updateItem(index, "name", e.target.value)
+            }
+          />
+
+          {/* COLORS */}
+          <Input
+            placeholder="Tailwind colors"
+            value={item.colors || ""}
+            onChange={(e) =>
+              updateItem(index, "colors", e.target.value)
+            }
+          />
+
+          {/* ICON KEY */}
+          <Input
+            placeholder="Icon key"
+            value={item.icon_key || ""}
+            onChange={(e) =>
+              updateItem(index, "icon_key", e.target.value)
+            }
+          />
+
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            onClick={() => removeItem(index)}
+          >
+            Remove
+          </Button>
+
+        </div>
+      ))}
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={addItem}
+      >
+        + Add Client
+      </Button>
+
+    </div>
+  );
+}
+
+ if (field.type === "footer") {
+      const groupValue = value || {};
+
+      const update = (key: string, val: any) =>
+        onChange(field.name, {
+          ...groupValue,
+          [key]: val,
+        });
+
+      return (
+        <div
+          key={field.name}
+          className="border rounded-lg p-4 space-y-3"
+        >
+          <label className="font-semibold text-sm">
+            {field.label}
+          </label>
+
+          {field.fields?.map((subField: any) => {
+            const subValue =
+              groupValue[subField.name] ?? "";
+
+            if (subField.type === "text")
+              return (
+                <Input
+                  key={subField.name}
+                  placeholder={subField.label}
+                  value={subValue}
+                  onChange={(e) =>
+                    update(
+                      subField.name,
+                      e.target.value
+                    )
+                  }
+                />
+              );
+
+            if (subField.type === "textarea")
+              return (
+                <Textarea
+                  key={subField.name}
+                  placeholder={subField.label}
+                  value={subValue}
+                  onChange={(e) =>
+                    update(
+                      subField.name,
+                      e.target.value
+                    )
+                  }
+                />
+              );
+
+            if (subField.type === "image")
+              return (
+                <div key={subField.name}>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file =
+                        e.target.files?.[0];
+                      if (!file) return;
+
+                      const url =''
+                        // await uploadFile(file);
+
+                      update(
+                        subField.name,
+                        url
+                      );
+                    }}
+                  />
+
+                  {subValue && (
+                    <img
+                      src={subValue}
+                      className="h-24 border rounded mt-2"
+                    />
+                  )}
+                </div>
+              );
+
+            return null;
+          })}
+        </div>
+      );
+    }
     return null;
   });
 }

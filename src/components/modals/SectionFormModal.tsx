@@ -139,7 +139,19 @@ if (field.type === "list") {
         : [];
       continue;
     }
+/* ---- CLIENT ITEMS ---- */
+if (field.type === "client_items") {
+  normalized[field.name] = Array.isArray(value)
+    ? value.map((item: any) => ({
+        logo: item?.logo ?? "",
+        name: item?.name ?? "",
+        colors: item?.colors ?? "",
+        icon_key: item?.icon_key ?? "",
+      }))
+    : [];
 
+  continue;
+}
     /* ---- ARRAY ---- */
     if (field.type === "array") {
       normalized[field.name] = Array.isArray(value) ? value : [];
@@ -221,18 +233,13 @@ export default function SectionFormModal({
   try {
     const error = validateForm();
     if (error) return toast.error(error);
-
     const formData = new FormData();
-
     ["section_key", "title", "sub_title", "sort_order", "is_active"].forEach(
       (key) => formData.append(key, String(form[key]))
     );
-
     const metaWithoutFiles: any = {};
     const fileMap: Record<string, File[]> = {};
-
     Object.entries(form.meta || {}).forEach(([key, value]: any) => {
-
       /* ---------- CLIENT ITEMS (NESTED FILE) ---------- */
       if (key === "client_items" && Array.isArray(value)) {
         metaWithoutFiles[key] = value.map((item: any, index: number) => {
@@ -245,45 +252,44 @@ export default function SectionFormModal({
         });
         return;
       }
-
       /* ---------- EMPTY ARRAY (CLEAR IMAGE) ---------- */
       if (Array.isArray(value) && value.length === 0) {
         metaWithoutFiles[key] = null;
         return;
       }
-
       /* ---------- MULTIPLE FILES ---------- */
       if (Array.isArray(value) && value[0] instanceof File) {
         fileMap[key] = value;
         metaWithoutFiles[key] = key; // backend will map this
         return;
       }
-
       /* ---------- SINGLE FILE ---------- */
       if (value instanceof File) {
         fileMap[key] = [value];
         metaWithoutFiles[key] = null; // backend detects new upload
         return;
       }
-
       /* ---------- IMAGE REMOVED ---------- */
       if (value === null) {
         metaWithoutFiles[key] = null;
         return;
       }
-
       /* ---------- EXISTING VALUE ---------- */
       metaWithoutFiles[key] = value;
     });
-
     /* ---------- APPEND FILES ---------- */
     Object.entries(fileMap).forEach(([key, files]) => {
       files.forEach((file) => formData.append(key, file));
     });
-
     /* ---------- APPEND META ---------- */
-    formData.append("meta", JSON.stringify(metaWithoutFiles));
+  const hasMeta =
+  metaWithoutFiles &&
+  typeof metaWithoutFiles === "object" &&
+  Object.keys(metaWithoutFiles).length > 0;
 
+if (hasMeta) {
+  formData.append("meta", JSON.stringify(metaWithoutFiles));
+}
     /* ---------- DEBUG ---------- */
     let debugOutput = "";
     for (const [key, value] of formData.entries()) {
@@ -291,10 +297,7 @@ export default function SectionFormModal({
         ? `${key}: [File] ${value.name}\n`
         : `${key}: ${value}\n`;
     }
-    console.log(debugOutput);
-
     // return false; // ← REMOVE when ready
-
     if (editingSection) {
       await axios.put(
         `${API_BASE_URL}/pages/${pageId}/sections/${editingSection.id}`,
@@ -308,7 +311,6 @@ export default function SectionFormModal({
       );
       toast.success("Section created");
     }
-
     setOpen(false);
     refresh();
   } catch (err) {

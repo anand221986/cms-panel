@@ -637,113 +637,66 @@ export const SECTION_FORM_CONFIG: Record<
       },
     ],
   },
-// jobs: {
-//   label: "Jobs Section",
-//   fields: [
-//     {
-//       name: "hero",
-//       label: "Hero Area",
-//       type: "group",
-//       fields: [
-//         {
-//           name: "title",
-//           label: "Title",
-//           type: "heading",
-//           fields: [
-//             { name: "prefix", label: "Title Prefix" },
-//             { name: "highlight", label: "Title Highlight" },
-//             { name: "suffix", label: "Title Suffix" },
-//           ],
-//         },
-//         { name: "description", label: "Description", type: "textarea" },
-
-//         // Reuse KPI / metrics renderer
-//         {
-//           name: "floating_stats",
-//           label: "Floating Stats",
-//           type: "metrics_items",
-//         },
-
-//         // Notifications as dynamic list
-//         {
-//           name: "notifications",
-//           label: "Notifications",
-//           type: "list",
-//           itemFields: [
-//             { name: "title", label: "Title" },
-//             { name: "subtitle", label: "Subtitle" },
-//             {
-//               name: "icon",
-//               label: "Icon",
-//               type: "select",
-//               options: ["briefcase", "calendar", "users"],
-//             },
-//             {
-//               name: "color",
-//               label: "Color",
-//               type: "select",
-//               options: ["purple", "blue", "pink"],
-//             },
-//           ],
-//         },
-//       ],
-//     },
-
-//     // Workflow steps reused as workflow_blocks
-//     {
-//       name: "workflow_steps",
-//       label: "Workflow Steps",
-//       type: "workflow_blocks",
-//     },
-
-//     // Feature cards can be reused as a generic blocks list
-//     {
-//       name: "features",
-//       label: "Feature Cards",
-//       type: "blocks",
-//     },
-
-//     // Optional CTA
-//     {
-//       name: "cta",
-//       label: "CTA (Optional)",
-//       type: "group",
-//       fields: [
-//         { name: "title", label: "Title" },
-//         { name: "description", label: "Description" },
-//         {
-//           name: "primary_button",
-//           label: "Primary Button",
-//           type: "group",
-//           fields: [
-//             { name: "label", label: "Label" },
-//             { name: "link", label: "Link" },
-//           ],
-//         },
-//         {
-//           name: "secondary_button",
-//           label: "Secondary Button",
-//           type: "group",
-//           fields: [
-//             { name: "label", label: "Label" },
-//             { name: "link", label: "Link" },
-//           ],
-//         },
-//         {
-//           name: "badges",
-//           label: "Badges",
-//           type: "list",
-//           itemFields: [{ name: "badge", label: "Badge Text" }],
-//         },
-//       ],
-//     },
-//   ],
-// }
+ 
 
  jobs: {
     label: "Jobs Listing Section",
     fields: [{}],
   },
+//   footer: {
+//   label: "Footer",
+//   fields: [
+//     {
+//       name: "company",
+//       label: "Company Info",
+//       type: "footer",
+//       fields: [
+//         { name: "name", label: "Company Name", type: "text" },
+//         { name: "description", label: "Description", type: "textarea" },
+//         { name: "phone", label: "Phone", type: "text" },
+//         { name: "email", label: "Email", type: "text" },
+//         { name: "address", label: "Address", type: "text" },
+//         { name: "logo", label: "Logo", type: "image" },
+//       ],
+//     },
+
+//     {
+//       name: "employer_links",
+//       label: "Employer Links",
+//       type: "list",
+//       fields: [
+//         { name: "label", label: "Label", type: "text" },
+//         { name: "url", label: "URL", type: "text" },
+//       ],
+//     },
+
+//     {
+//       name: "jobseeker_links",
+//       label: "Job Seeker Links",
+//       type: "list",
+//       fields: [
+//         { name: "label", label: "Label", type: "text" },
+//         { name: "url", label: "URL", type: "text" },
+//       ],
+//     },
+
+//     {
+//       name: "newsletter",
+//       label: "Newsletter",
+//       type: "group",
+//       fields: [
+//         { name: "title", label: "Title", type: "text" },
+//         { name: "description", label: "Description", type: "textarea" },
+//       ],
+//     },
+
+//     {
+//       name: "copyright",
+//       label: "Copyright Text",
+//       type: "text",
+//     },
+//   ],
+// },
 
 
 };

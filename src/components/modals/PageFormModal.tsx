@@ -20,6 +20,7 @@ interface PageFormValues {
   ogDescription: string | null;
   ogImage: string | null;
   status:string;
+  scripts: string[]; 
 }
 
 interface PageFormModalProps {
@@ -42,7 +43,8 @@ const initialFormValues: PageFormValues = {
   ogTitle: null,
   ogDescription: null,
   ogImage: null,
-  status:"draft"
+  status:"draft",
+  scripts: [], 
 };
 
 export default function PageFormModal({
@@ -67,7 +69,8 @@ export default function PageFormModal({
         ogTitle: editingPage.og_title,
         ogDescription: editingPage.og_description,
         ogImage: editingPage.og_image,
-        status:editingPage.status
+        status:editingPage.status,
+        scripts: editingPage.scripts || [], 
       });
     } else {
       setFormValues(initialFormValues);
@@ -225,6 +228,42 @@ export default function PageFormModal({
               onChange={e => setFormValues({ ...formValues, ogImage: e.target.value })}
             />
           </div>
+          <div className="space-y-2 w-full">
+  <Label>Scripts (Google Analytics, Pixel, Custom)</Label>
+  {formValues.scripts.map((script, index) => (
+    <div key={index} className="flex gap-2 items-start">
+      <Textarea
+        rows={3}
+        className="flex-1"
+        value={script}
+        onChange={(e) => {
+          const updated = [...formValues.scripts];
+          updated[index] = e.target.value;
+          setFormValues({ ...formValues, scripts: updated });
+        }}
+      />
+      <Button
+        type="button"
+        variant="destructive"
+        onClick={() => {
+          const updated = formValues.scripts.filter((_, i) => i !== index);
+          setFormValues({ ...formValues, scripts: updated });
+        }}
+      >
+        Remove
+      </Button>
+    </div>
+  ))}
+  <Button
+    type="button"
+    variant="outline"
+    onClick={() =>
+      setFormValues({ ...formValues, scripts: [...formValues.scripts, ""] })
+    }
+  >
+    + Add Script
+  </Button>
+</div>
           <div className="space-y-2 w-full">
   <Label htmlFor="status">Status</Label>
   <select
